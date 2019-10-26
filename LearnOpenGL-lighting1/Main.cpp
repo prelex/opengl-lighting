@@ -189,8 +189,6 @@ int main()
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setFloat("material.shininess", 32.0f);
 
-		lightPos.x = 5*sin(2 * glfwGetTime());
-
 		// point light
 		lightingShader.setVec3("pointLight.position", lightPos);
 		lightingShader.setVec3("pointLight.ambient", 0.05f, 0.05f, 0.05f);
