@@ -34,6 +34,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
 // Position of light source
 glm::vec3 lightPos(0.0f, 3.0f, 5.0f);
 
+
 int main()
 {
 	// glfw: initialize and configure
@@ -261,7 +262,7 @@ int main()
 		modelShader.use();
 		modelShader.setMat4("projection", projection);
 		modelShader.setMat4("view", view);
-		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::translate(model, glm::vec3(0.0f, 1.75f, 50.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
 		modelShader.setMat4("model", model);
 		ourModel.Draw(modelShader);

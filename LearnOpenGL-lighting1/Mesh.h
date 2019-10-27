@@ -4,13 +4,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <vector>
-
-class Shader;
+#include "Shader.h"
 
 struct Vertex {
 	glm::vec3 Position;
 	glm::vec3 Normal;
 	glm::vec2 TexCoords;
+	glm::vec3 Tangent;
+	glm::vec3 Bitangent;
 };
 
 struct Texture {
@@ -21,19 +22,28 @@ struct Texture {
 
 class Mesh {
 public:
-	// Mesh data
+	/*  Mesh Data  */
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
+	unsigned int VAO;
 
-	// Functions
-	Mesh(std::vector<Vertex> aVertices, std::vector<unsigned int> aIndices, std::vector<Texture> aTextures);
+	/*  Functions  */
+	// constructor
+	Mesh(std::vector<Vertex> aVertices, std::vector<unsigned int> aIndices, std::vector<Texture> aTextures) 
+		: vertices(aVertices), indices(aIndices), textures(aTextures)
+	{
+		setupMesh();
+	}
+
+	// render the mesh
 	void Draw(Shader shader);
-
+	
 private:
-	// Render data
-	unsigned int VAO, VBO, EBO;
+	/*  Render data  */
+	unsigned int VBO, EBO;
 
-	// Functions
-	void setup();
+	/*  Functions    */
+	// initializes all the buffer objects/arrays
+	void setupMesh();
 };
