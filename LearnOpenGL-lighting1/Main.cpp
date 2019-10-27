@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Camera.h"
+#include "Model.h"
 
 void processInput(GLFWwindow* window);
 
@@ -65,6 +66,7 @@ int main()
 	// load appropriate vertex and fragment shaders, and create shader programs
 	Shader lightingShader("shaders/lightingVertexShader.txt", "shaders/lightingFragmentShader.txt");
 	Shader lampShader("shaders/lampVertexShader.txt", "shaders/lampFragmentShader.txt");
+	Shader modelShader("shaders/modelVertexShader.txt", "shaders/modelFragmentShader.txt");
 
 	glViewport(0, 0, 800, 600);
 
@@ -167,9 +169,7 @@ int main()
 	unsigned int diffuseMap = loadTexture("images/container2.png");
 	unsigned int specularMap = loadTexture("images/container2_specular.png");
 
-	lightingShader.use();
-	lightingShader.setInt("material.diffuse", 0);
-	lightingShader.setInt("material.specular", 1);
+	Model ourModel("objects/nanosuit/nanosuit.obj");
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -186,6 +186,8 @@ int main()
 
 		// activate the lighting shader program
 		lightingShader.use();
+		lightingShader.setInt("material.diffuse", 0);
+		lightingShader.setInt("material.specular", 1);
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setFloat("material.shininess", 32.0f);
 
@@ -218,7 +220,10 @@ int main()
 
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
 		lightingShader.setMat4("model", model);
+		ourModel.Draw(lightingShader);
 
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
@@ -240,6 +245,7 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		// render lamp
 		lampShader.use();
 		lampShader.setMat4("projection", projection);
 		lampShader.setMat4("view", view);
@@ -251,6 +257,15 @@ int main()
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
+		// render nanosuit 
+		modelShader.use();
+		modelShader.setMat4("projection", projection);
+		modelShader.setMat4("view", view);
+		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
+		modelShader.setMat4("model", model);
+		ourModel.Draw(modelShader);
+		
 		// swap buffers and poll events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
