@@ -172,7 +172,7 @@ int main()
 	unsigned int diffuseMap = loadTexture("images/container2.png");
 	unsigned int specularMap = loadTexture("images/container2_specular.png");
 
-	Model ourModel("objects/nanosuit/nanosuit.obj");
+	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -245,12 +245,12 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
-		// render model
+		// render nanosuit model
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, modelPos);
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
 		lightingShader.setMat4("model", model);
-		ourModel.Draw(lightingShader);
+		nanosuitModel.Draw(lightingShader);
 
 		lightPos.x = 5 * cos(glfwGetTime());
 
