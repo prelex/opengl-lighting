@@ -8,6 +8,8 @@ struct Material {
 sampler2D diffuse;
 sampler2D specular;
 float shininess;
+sampler2D texture_diffuse1;
+sampler2D texture_specular1;
 };
 
 struct Light {

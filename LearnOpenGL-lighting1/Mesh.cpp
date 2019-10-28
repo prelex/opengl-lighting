@@ -23,7 +23,7 @@ void Mesh::Draw(Shader shader)
 			number = std::to_string(heightNr++);
 
 		// now set the sampler to the correct texture unit
-		shader.setInt((name + number).c_str(), i);
+		shader.setInt(("material." + name + number).c_str(), i);
 		// and finally bind the texture
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}

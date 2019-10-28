@@ -34,6 +34,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
 // Position of light source
 glm::vec3 lightPos(0.0f, 3.0f, 5.0f);
 
+// Position of the nanosuit model
+glm::vec3 modelPos(0.0f, -2.0f, 4.0f);
 
 int main()
 {
@@ -221,10 +223,7 @@ int main()
 
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
 		lightingShader.setMat4("model", model);
-		ourModel.Draw(lightingShader);
 
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
@@ -246,6 +245,15 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		// render model
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, modelPos);
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+		lightingShader.setMat4("model", model);
+		ourModel.Draw(lightingShader);
+
+		lightPos.x = 5 * cos(glfwGetTime());
+
 		// render lamp
 		lampShader.use();
 		lampShader.setMat4("projection", projection);
@@ -258,15 +266,6 @@ int main()
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		// render nanosuit 
-		modelShader.use();
-		modelShader.setMat4("projection", projection);
-		modelShader.setMat4("view", view);
-		model = glm::translate(model, glm::vec3(0.0f, 1.75f, 50.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
-		modelShader.setMat4("model", model);
-		ourModel.Draw(modelShader);
-		
 		// swap buffers and poll events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
