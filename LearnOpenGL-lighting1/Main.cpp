@@ -70,6 +70,7 @@ int main()
 	Shader lightingShader("shaders/lightingVertexShader.txt", "shaders/lightingFragmentShader.txt");
 	Shader lampShader("shaders/lampVertexShader.txt", "shaders/lampFragmentShader.txt");
 	Shader modelShader("shaders/modelVertexShader.txt", "shaders/modelFragmentShader.txt");
+	Shader singleColourShader("shaders/lightingVertexShader.txt", "shaders/fragmentShaderSingleColour.txt");
 
 	glViewport(0, 0, 800, 600);
 
@@ -168,6 +169,8 @@ int main()
 	glEnableVertexAttribArray(0);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	unsigned int diffuseMap = loadTexture("images/container2.png");
 	unsigned int specularMap = loadTexture("images/container2_specular.png");
@@ -185,7 +188,7 @@ int main()
 
 		// clear the color buffer and depth buffer
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// activate the lighting shader program
 		lightingShader.use();
@@ -234,6 +237,8 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, specularMap);
 
 		// render cube objects
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
 		glBindVertexArray(cubeVAO);
 		for (unsigned int i = 0; i < 15; ++i)
 		{
@@ -245,16 +250,38 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		// render upscaled cube objects
+		singleColourShader.use();
+		singleColourShader.setInt("material.diffuse", 0);
+		singleColourShader.setInt("material.specular", 1);
+		singleColourShader.setMat4("projection", projection);
+		singleColourShader.setMat4("view", view);
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00);
+		glDisable(GL_DEPTH_TEST);
+		for (unsigned int i = 0; i < 15; ++i)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 50.0f * glfwGetTime();
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(1.1f, 1.1f, 1.1f));
+			singleColourShader.setMat4("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+		glStencilMask(0xFF);
+		glEnable(GL_DEPTH_TEST);
+		
 		// render nanosuit model
+		lightingShader.use();
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, modelPos);
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
 		lightingShader.setMat4("model", model);
 		nanosuitModel.Draw(lightingShader);
 
-		lightPos.x = 5 * cos(glfwGetTime());
-
 		// render lamp
+		lightPos.x = 5 * cos(glfwGetTime());
 		lampShader.use();
 		lampShader.setMat4("projection", projection);
 		lampShader.setMat4("view", view);
