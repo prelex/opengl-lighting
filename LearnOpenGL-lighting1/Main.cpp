@@ -269,6 +269,7 @@ int main()
 			singleColourShader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		glStencilMask(0xFF);
 		glEnable(GL_DEPTH_TEST);
 		
