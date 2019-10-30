@@ -70,7 +70,8 @@ int main()
 	Shader lightingShader("shaders/lightingVertexShader.txt", "shaders/lightingFragmentShader.txt");
 	Shader lampShader("shaders/lampVertexShader.txt", "shaders/lampFragmentShader.txt");
 	Shader modelShader("shaders/modelVertexShader.txt", "shaders/modelFragmentShader.txt");
-	Shader grassShader("shaders/grassVertexShader.txt", "shaders/grassFragmentShader.txt");
+	Shader grassShader("shaders/basicQuadVertexShader.txt", "shaders/grassFragmentShader.txt");
+	Shader windowShader("shaders/basicQuadVertexShader.txt", "shaders/windowFragmentShader.txt");
 
 	glViewport(0, 0, 800, 600);
 
@@ -174,21 +175,24 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// configure the grass VAO
-	unsigned int grassVAO;
-	glGenVertexArrays(1, &grassVAO);
+	// configure the basic quad VAO
+	unsigned int quadVAO;
+	glGenVertexArrays(1, &quadVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBindVertexArray(grassVAO);
+	glBindVertexArray(quadVAO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	unsigned int diffuseMap = loadTexture("images/container2.png");
 	unsigned int specularMap = loadTexture("images/container2_specular.png");
 	unsigned int grassTexture = loadTexture("images/grass.png");
+	unsigned int windowTexture = loadTexture("images/blending_transparent_window.png");
 
 	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
@@ -286,7 +290,7 @@ int main()
 		// render grass
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, grassTexture);
-		glBindVertexArray(grassVAO);
+		glBindVertexArray(quadVAO);
 		grassShader.use();
 		grassShader.setInt("grassTexture", 0);
 		grassShader.setMat4("projection", projection);
@@ -298,6 +302,19 @@ int main()
 			grassShader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
+
+		// render window
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, windowTexture);
+		windowShader.setInt("texture1", 0);
+		windowShader.setMat4("projection", projection);
+		windowShader.setMat4("view", view);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 15.0f));
+		model = glm::scale(model, glm::vec3(2.0f, 2.0f, 1.0f));
+		windowShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 
 		// swap buffers and poll events
 		glfwSwapBuffers(window);
