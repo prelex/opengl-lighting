@@ -177,6 +177,22 @@ int main()
 
 	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
+	// bind uniform block to binding point 0
+	unsigned int uniformBlockIndexLamp = glGetUniformBlockIndex(lampShader.ID, "Matrices");
+	unsigned int uniformBlockIndexLighting = glGetUniformBlockIndex(lightingShader.ID, "Matrices");
+	unsigned int uniformBlockIndexModel = glGetUniformBlockIndex(modelShader.ID, "Matrices");
+	glUniformBlockBinding(lampShader.ID, uniformBlockIndexLamp, 0);
+	glUniformBlockBinding(lightingShader.ID, uniformBlockIndexLighting, 0);
+	glUniformBlockBinding(modelShader.ID, uniformBlockIndexModel, 0);
+
+	// create uniform buffer object
+	unsigned int uboMatrices;
+	glGenBuffers(1, &uboMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -189,6 +205,12 @@ int main()
 		// clear the color buffer and depth buffer
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glm::mat4 view = camera.getViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(view));
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
 
 		// activate the lighting shader program
 		lightingShader.use();
@@ -218,12 +240,6 @@ int main()
 		lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		
-		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
-		lightingShader.setMat4("projection", projection);
-		glm::mat4 view = camera.getViewMatrix();
-		lightingShader.setMat4("view", view);
-
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
 		lightingShader.setMat4("model", model);
@@ -259,8 +275,6 @@ int main()
 
 		// render lamp
 		lampShader.use();
-		lampShader.setMat4("projection", projection);
-		lampShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f)); 
