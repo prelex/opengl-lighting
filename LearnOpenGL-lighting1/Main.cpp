@@ -32,8 +32,8 @@ bool firstMouse = true;
 // set up the camera
 Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
 
-// Position of light source
-glm::vec3 lightPos(0.0f, 3.0f, 5.0f);
+// direction of light source
+glm::vec3 lightDir(1.0f, -1.0f, 1.0f);
 
 // Position of the nanosuit model
 glm::vec3 modelPos(0.0f, -2.0f, 4.0f);
@@ -259,14 +259,11 @@ int main()
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setFloat("material.shininess", 32.0f);
 
-		// point light
-		lightingShader.setVec3("pointLight.position", lightPos);
-		lightingShader.setVec3("pointLight.ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("pointLight.diffuse", 0.8f, 0.66f, 0.41f);
-		lightingShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("pointLight.constant", 1.0f);
-		lightingShader.setFloat("pointLight.linear", 0.07);
-		lightingShader.setFloat("pointLight.quadratic", 0.017);
+		// directional light
+		lightingShader.setVec3("dirLight.direction", lightDir);
+		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+		lightingShader.setVec3("dirLight.diffuse", 0.8f, 0.66f, 0.41f);
+		lightingShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
 		// spotlight
 		lightingShader.setVec3("spotLight.position", camera.Position);
@@ -316,19 +313,6 @@ int main()
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
 		lightingShader.setMat4("model", model);
 		nanosuitModel.Draw(lightingShader);
-
-		lightPos.x = 5 * cos(glfwGetTime());
-
-		// render lamp
-		lampShader.use();
-		lampShader.setMat4("projection", projection);
-		lampShader.setMat4("view", view);
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f)); 
-		lampShader.setMat4("model", model);
-		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// render skybox
 		glDepthFunc(GL_LEQUAL);
