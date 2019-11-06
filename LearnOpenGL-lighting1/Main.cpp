@@ -206,7 +206,7 @@ int main()
 	// texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-
+	//
 	// configure the light's VAO
 	unsigned int lightVAO;
 	glGenVertexArrays(1, &lightVAO);
