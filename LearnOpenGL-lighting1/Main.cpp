@@ -67,7 +67,7 @@ int main()
 	}
 
 	// load appropriate vertex and fragment shaders, and create shader programs
-	Shader lightingShader("shaders/lightingVertexShader.txt", "shaders/lightingFragmentShader.txt");
+	Shader lightingShader("shaders/lightingVertexShader.txt", "shaders/lightingFragmentShader.txt", "shaders/geometryShader.txt");
 	Shader lampShader("shaders/lampVertexShader.txt", "shaders/lampFragmentShader.txt");
 	Shader modelShader("shaders/modelVertexShader.txt", "shaders/modelFragmentShader.txt");
 
@@ -214,6 +214,7 @@ int main()
 
 		// activate the lighting shader program
 		lightingShader.use();
+		lightingShader.setFloat("time", glfwGetTime());
 		lightingShader.setInt("material.diffuse", 0);
 		lightingShader.setInt("material.specular", 1);
 		lightingShader.setVec3("viewPos", camera.Position);

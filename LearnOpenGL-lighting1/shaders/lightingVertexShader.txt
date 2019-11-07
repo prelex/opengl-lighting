@@ -6,6 +6,11 @@ out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoords;
 
+// for the geometry shader
+out VS_OUT {
+vec2 TexCoords;
+} vs_out;
+
 layout (std140) uniform Matrices
 {
 uniform mat4 view;
