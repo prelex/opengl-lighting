@@ -8,7 +8,7 @@ out vec2 TexCoords;
 
 // for the geometry shader
 out VS_OUT {
-vec2 TexCoords;
+vec2 texCoords;
 } vs_out;
 
 layout (std140) uniform Matrices
@@ -23,7 +23,7 @@ void main()
 FragPos = vec3(model * vec4(aPos, 1.0));
 Normal = mat3(transpose(inverse(model)))* aNormal;
 
-TexCoords = aTexCoords;
+vs_out.texCoords = aTexCoords;
 
 gl_Position =  projection*view*vec4(FragPos, 1.0);
 }
