@@ -32,10 +32,10 @@ bool firstMouse = true;
 Camera camera(glm::vec3(0.0f, 2.0f, 20.0f));
 
 // Position of light source
-glm::vec3 lightPos(0.0f, 3.0f, 5.0f);
+glm::vec3 lightPos(0.0f, 5.0f, 5.0f);
 
 // Position of the nanosuit model
-glm::vec3 modelPos(0.0f, -2.0f, 4.0f);
+glm::vec3 modelPos(0.0f, -0.5f, 4.0f);
 
 int main()
 {
@@ -133,21 +133,21 @@ int main()
 
 	// positions of the 15 cubes to spell out "C++"
 	glm::vec3 cubePositions[] = {
-	 glm::vec3(-6.0f,  0.0f,  0.0f),   // C
-	 glm::vec3(-5.5f,  1.25f, 0.0f),   // 
-	 glm::vec3(-5.5f, -1.25f,  0.0f),  //  
-	 glm::vec3(-4.0f, 1.5f,  0.0f),    // 
-	 glm::vec3(-4.0f, -1.5f,  0.0f),   // _______
-	 glm::vec3(-2.0f,  0.0f,  0.0f),   // +
-	 glm::vec3(-0.5f, 0.0f,  0.0f),    // 
-	 glm::vec3(1.0f,  0.0f,  0.0f),    //
-	 glm::vec3(-0.5f,  1.5f,  0.0f),   //
-	 glm::vec3(-0.5f,  -1.5f,  0.0f),  // _______
-	 glm::vec3(3.0f,  0.0f,  0.0f),    // +
-	 glm::vec3(4.5f, 0.0f,  0.0f),	   // 
-	 glm::vec3(6.0f,  0.0f,  0.0f),	   // 
-	 glm::vec3(4.5f,  1.5f,  0.0f),	   //
-	 glm::vec3(4.5f,  -1.5f,  0.0f)	   // 
+	 glm::vec3(-6.0f,  1.5f, 0.0f),  // C
+	 glm::vec3(-5.5f, 2.75f, 0.0f),  // 
+	 glm::vec3(-5.5f, 0.25f, 0.0f),  //  
+	 glm::vec3(-4.0f,  3.0f, 0.0f),  // 
+	 glm::vec3(-4.0f,  0.0f, 0.0f),  // _______
+	 glm::vec3(-2.0f,  1.5f, 0.0f),  // +
+	 glm::vec3(-0.5f,  1.5f, 0.0f),  // 
+	 glm::vec3( 1.0f,  1.5f, 0.0f),  //
+	 glm::vec3(-0.5f,  3.0f, 0.0f),  //
+	 glm::vec3(-0.5f,  0.0f, 0.0f),  // _______
+	 glm::vec3( 3.0f,  1.5f, 0.0f),  // +
+	 glm::vec3( 4.5f,  1.5f, 0.0f),	 // 
+	 glm::vec3( 6.0f,  1.5f, 0.0f),	 // 
+	 glm::vec3( 4.5f,  3.0f, 0.0f),	 //
+	 glm::vec3( 4.5f,  0.0f, 0.0f)	 // 
 	};
 
 	// configure the cube's VAO
