@@ -29,7 +29,7 @@ float lastX = screenWidth / 2.0f, lastY = screenHeight / 2.0f;
 bool firstMouse = true;
 
 // set up the camera
-Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 20.0f));
 
 // Position of light source
 glm::vec3 lightPos(0.0f, 3.0f, 5.0f);
@@ -121,6 +121,16 @@ int main()
 	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f, // bottom-left
 	};
 
+	float quadVertices[] = {
+		// positions		// normals		  // texture coords
+		-0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 1.0f
+	};
+
 	// positions of the 15 cubes to spell out "C++"
 	glm::vec3 cubePositions[] = {
 	 glm::vec3(-6.0f,  0.0f,  0.0f),   // C
@@ -141,21 +151,18 @@ int main()
 	};
 
 	// configure the cube's VAO
-	unsigned int VBO, cubeVAO;
+	unsigned int cubeVBO, cubeVAO;
 	glGenVertexArrays(1, &cubeVAO);
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glGenBuffers(1, &cubeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 	glBindVertexArray(cubeVAO);
-
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-
 	// normal attribute
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
 	glEnableVertexAttribArray(1);
-
 	// texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
@@ -163,18 +170,33 @@ int main()
 	// configure the light's VAO
 	unsigned int lightVAO;
 	glGenVertexArrays(1, &lightVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBindVertexArray(lightVAO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// configure the quad's vao
+	unsigned int quadVBO, quadVAO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glBindVertexArray(quadVAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
-	unsigned int diffuseMap = loadTexture("images/container2.png");
-	unsigned int specularMap = loadTexture("images/container2_specular.png");
+	// load textures
+	unsigned int cubeDiffuseMap = loadTexture("images/container2.png");
+	unsigned int cubeSpecularMap = loadTexture("images/container2_specular.png");
 
 	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
@@ -245,16 +267,15 @@ int main()
 		glm::mat4 model = glm::mat4(1.0f);
 		lightingShader.setMat4("model", model);
 
+		// render cube objects
+		//----------------
+		glBindVertexArray(cubeVAO);
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-
+		glBindTexture(GL_TEXTURE_2D, cubeDiffuseMap);
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-
-		// render cube objects
-		glBindVertexArray(cubeVAO);
+		glBindTexture(GL_TEXTURE_2D, cubeSpecularMap);
 		for (unsigned int i = 0; i < 15; ++i)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
@@ -265,6 +286,11 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		// render quad
+		//--------------
+		glBindVertexArray(quadVAO);
+
+
 		// render nanosuit model
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, modelPos);
@@ -272,15 +298,13 @@ int main()
 		lightingShader.setMat4("model", model);
 		nanosuitModel.Draw(lightingShader);
 
-		lightPos.x = 5 * cos(glfwGetTime());
-
-		// render lamp
+		// render light source
 		lampShader.use();
+		lightPos.x = 5 * cos(glfwGetTime());
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f)); 
 		lampShader.setMat4("model", model);
-
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
