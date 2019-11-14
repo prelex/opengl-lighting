@@ -16,7 +16,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-unsigned int &loadTexture( const char* name);
+unsigned int &loadTexture(const char* name);
 
 const unsigned int screenWidth = 800, screenHeight = 600;
 
@@ -31,8 +31,8 @@ bool firstMouse = true;
 // set up the camera
 Camera camera(glm::vec3(0.0f, 2.0f, 20.0f));
 
-// Position of light source
-glm::vec3 lightPos(0.0f, 5.0f, 5.0f);
+// Position of lamp
+glm::vec3 lampPos(0.0f, 5.0f, 5.0f);
 
 // Position of the nanosuit model
 glm::vec3 modelPos(0.0f, -0.5f, 4.0f);
@@ -197,6 +197,8 @@ int main()
 	// load textures
 	unsigned int cubeDiffuseMap = loadTexture("images/container2.png");
 	unsigned int cubeSpecularMap = loadTexture("images/container2_specular.png");
+	unsigned int floorDiffuseMap = loadTexture("images/wood.jpg");
+	unsigned int floorSpecularMap = loadTexture("images/wood_specular.jpg");
 
 	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
@@ -241,16 +243,14 @@ int main()
 		lightingShader.setInt("material.specular", 1);
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setFloat("material.shininess", 32.0f);
-
 		// point light
-		lightingShader.setVec3("pointLight.position", lightPos);
+		lightingShader.setVec3("pointLight.position", lampPos);
 		lightingShader.setVec3("pointLight.ambient", 0.05f, 0.05f, 0.05f);
 		lightingShader.setVec3("pointLight.diffuse", 0.8f, 0.66f, 0.41f);
 		lightingShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
 		lightingShader.setFloat("pointLight.constant", 1.0f);
-		lightingShader.setFloat("pointLight.linear", 0.07);
-		lightingShader.setFloat("pointLight.quadratic", 0.017);
-
+		lightingShader.setFloat("pointLight.linear", 0.045);
+		lightingShader.setFloat("pointLight.quadratic", 0.0075);
 		// spotlight
 		lightingShader.setVec3("spotLight.position", camera.Position);
 		lightingShader.setVec3("spotLight.direction", camera.Front);
@@ -263,7 +263,7 @@ int main()
 		lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		
-		// world transformation
+		// world transformation (set to identity matrix initially)
 		glm::mat4 model = glm::mat4(1.0f);
 		lightingShader.setMat4("model", model);
 
@@ -286,10 +286,19 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
-		// render quad
+		// render floor
 		//--------------
 		glBindVertexArray(quadVAO);
-
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, floorDiffuseMap);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, floorSpecularMap);
+		model = glm::translate(model, glm::vec3(0.0f, -0.5f, 10.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(20.0f, 30.0f, 1.0f));
+		
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// render nanosuit model
 		model = glm::mat4(1.0f);
@@ -300,9 +309,9 @@ int main()
 
 		// render light source
 		lampShader.use();
-		lightPos.x = 5 * cos(glfwGetTime());
+		lampPos.x = 5 * cos(glfwGetTime());
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, lightPos);
+		model = glm::translate(model, lampPos);
 		model = glm::scale(model, glm::vec3(0.2f)); 
 		lampShader.setMat4("model", model);
 		glBindVertexArray(lightVAO);
@@ -361,17 +370,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll((float)yoffset);
 }
 
-unsigned int &loadTexture( const char* name)
+unsigned int &loadTexture(const char* name)
 {
 	unsigned int id;
 	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-
-	// set the texture filtering options
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// load and generate texture
 	int width, height, nrChannels;
@@ -379,8 +381,21 @@ unsigned int &loadTexture( const char* name)
 	unsigned char *data = stbi_load(name, &width, &height, &nrChannels, 0);
 	if (data)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GLenum format;
+		if (nrChannels == 3)
+			format = GL_RGB;
+		if (nrChannels == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		// set the texture filtering options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 	else
 	{
