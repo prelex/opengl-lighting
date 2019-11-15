@@ -133,22 +133,34 @@ int main()
 
 	// positions of the 15 cubes to spell out "C++"
 	glm::vec3 cubePositions[] = {
-	 glm::vec3(-6.0f,  1.5f, 0.0f),  // C
-	 glm::vec3(-5.5f, 2.75f, 0.0f),  // 
-	 glm::vec3(-5.5f, 0.25f, 0.0f),  //  
-	 glm::vec3(-4.0f,  3.0f, 0.0f),  // 
-	 glm::vec3(-4.0f,  0.0f, 0.0f),  // _______
-	 glm::vec3(-2.0f,  1.5f, 0.0f),  // +
-	 glm::vec3(-0.5f,  1.5f, 0.0f),  // 
-	 glm::vec3( 1.0f,  1.5f, 0.0f),  //
-	 glm::vec3(-0.5f,  3.0f, 0.0f),  //
-	 glm::vec3(-0.5f,  0.0f, 0.0f),  // _______
-	 glm::vec3( 3.0f,  1.5f, 0.0f),  // +
-	 glm::vec3( 4.5f,  1.5f, 0.0f),	 // 
-	 glm::vec3( 6.0f,  1.5f, 0.0f),	 // 
-	 glm::vec3( 4.5f,  3.0f, 0.0f),	 //
-	 glm::vec3( 4.5f,  0.0f, 0.0f)	 // 
+	 glm::vec3(-6.0f,  2.0f, 0.0f),  // C
+	 glm::vec3(-5.5f, 3.25f, 0.0f),  // 
+	 glm::vec3(-5.5f, 0.75f, 0.0f),  //  
+	 glm::vec3(-4.0f,  3.5f, 0.0f),  // 
+	 glm::vec3(-4.0f,  0.5f, 0.0f),  // _______
+	 glm::vec3(-2.0f,  2.0f, 0.0f),  // +
+	 glm::vec3(-0.5f,  2.0f, 0.0f),  // 
+	 glm::vec3( 1.0f,  2.0f, 0.0f),  //
+	 glm::vec3(-0.5f,  3.5f, 0.0f),  //
+	 glm::vec3(-0.5f,  0.5f, 0.0f),  // _______
+	 glm::vec3( 3.0f,  2.0f, 0.0f),  // +
+	 glm::vec3( 4.5f,  2.0f, 0.0f),	 // 
+	 glm::vec3( 6.0f,  2.0f, 0.0f),	 // 
+	 glm::vec3( 4.5f,  3.5f, 0.0f),	 //
+	 glm::vec3( 4.5f,  0.5f, 0.0f)	 // 
 	};
+
+	std::vector<glm::mat4> wallModelMatrices;
+	// left wall
+	glm::mat4 model(1.0f);
+	model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+	// right wall
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
 
 	// configure the cube's VAO
 	unsigned int cubeVBO, cubeVAO;
@@ -175,7 +187,7 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// configure the quad's vao
+	// configure the quad's VAO
 	unsigned int quadVBO, quadVAO;
 	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &quadVBO);
@@ -199,6 +211,7 @@ int main()
 	unsigned int cubeSpecularMap = loadTexture("images/container2_specular.png");
 	unsigned int floorDiffuseMap = loadTexture("images/wood.jpg");
 	unsigned int floorSpecularMap = loadTexture("images/wood_specular.jpg");
+	unsigned int wallTexture = loadTexture("images/wall_tex.jpg");
 
 	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
@@ -239,6 +252,8 @@ int main()
 
 		// activate the lighting shader program
 		lightingShader.use();
+		lightingShader.setFloat("scaleS", 1.0f);
+		lightingShader.setFloat("scaleT", 1.0f);
 		lightingShader.setInt("material.diffuse", 0);
 		lightingShader.setInt("material.specular", 1);
 		lightingShader.setVec3("viewPos", camera.Position);
@@ -296,11 +311,50 @@ int main()
 		model = glm::translate(model, glm::vec3(0.0f, -0.5f, 10.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(20.0f, 30.0f, 1.0f));
-		
+		lightingShader.setFloat("scaleS", 5.0f);
+		lightingShader.setFloat("scaleT", 7.5f);
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		// render walls
+		//----------
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, wallTexture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, 0); // no specular map for walls
+		// left wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		lightingShader.setFloat("scaleS", 7.5f);
+		lightingShader.setFloat("scaleT", 5.0f);
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// right wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(10.0f, 2.5f, 10.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// front wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 2.5f, -5.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// rear wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 2.5f, 25.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		lightingShader.setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// render nanosuit model
+		lightingShader.setFloat("scaleS", 1.0f);
+		lightingShader.setFloat("scaleT", 1.0f);
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, modelPos);
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
