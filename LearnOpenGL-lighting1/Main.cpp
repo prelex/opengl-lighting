@@ -16,8 +16,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-unsigned int &loadTexture( const char* name);
-unsigned int loadCubemap(std::vector<std::string> faces);
+unsigned int &loadTexture(const char* name);
 
 const unsigned int screenWidth = 800, screenHeight = 600;
 
@@ -30,13 +29,13 @@ float lastX = screenWidth / 2.0f, lastY = screenHeight / 2.0f;
 bool firstMouse = true;
 
 // set up the camera
-Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 20.0f));
 
-// direction of light source
-glm::vec3 lightDir(1.0f, -1.0f, 1.0f);
+// Position of lamp
+glm::vec3 lampPos(0.0f, 5.0f, 5.0f);
 
 // Position of the nanosuit model
-glm::vec3 modelPos(0.0f, -2.0f, 4.0f);
+glm::vec3 modelPos(0.0f, -0.5f, 4.0f);
 
 int main()
 {
@@ -71,140 +70,111 @@ int main()
 	Shader lightingShader("shaders/lightingVertexShader.txt", "shaders/lightingFragmentShader.txt");
 	Shader lampShader("shaders/lampVertexShader.txt", "shaders/lampFragmentShader.txt");
 	Shader modelShader("shaders/modelVertexShader.txt", "shaders/modelFragmentShader.txt");
-	Shader skyboxShader("shaders/skyboxVertexShader.txt", "shaders/skyboxFragmentShader.txt");
 
 	glViewport(0, 0, 800, 600);
 
 	// cube vertices
 	// defined in the appropriate order for face culling
-	float vertices[] = {
-		// position           // normals		   // texture coords
-		// back face
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-right
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-left
-		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f, // bottom-left
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-left
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-right
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f, // top-right
-		 // front face					  		 			   
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, // bottom-left
-		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f, // bottom-right
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, // top-right
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, // top-right
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f, // top-left
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, // bottom-left
-		 // left face					  					   
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-right
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-left
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-left
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-left
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-right
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-right
-		// right face									   
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
-		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-right
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
-		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-left
-		 // bottom face										   
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
-		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, // top-left
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f, // bottom-right
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
-		// top face					   
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
-		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, // top-right
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f, // bottom-left
+	float cubeVertices[] = {
+	// position           // normals		   // texture coords
+	// back face
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-right
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-left
+	 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f, // bottom-left
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-left
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-right
+	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f, // top-right
+	 // front face					  		 			   
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, // bottom-left
+	 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f, // bottom-right
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, // top-right
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, // top-right
+	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f, // top-left
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, // bottom-left
+	 // left face					  					   
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-right
+	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-left
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-left
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-left
+	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-right
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-right
+	// right face									   
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
+	 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-right
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
+	 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-left
+	 // bottom face										   
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
+ 	 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, // top-left
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
+	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f, // bottom-right
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
+	// top face					   
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
+	 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, // top-right
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
+	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f, // bottom-left
 	};
 
-
-
-	float skyboxVertices[] = {
-		// positions          
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
+	float quadVertices[] = {
+		// positions		// normals		  // texture coords
+		-0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 1.0f
 	};
 
 	// positions of the 15 cubes to spell out "C++"
 	glm::vec3 cubePositions[] = {
-	 glm::vec3(-6.0f,  0.0f,  0.0f),   // C
-	 glm::vec3(-5.5f,  1.25f, 0.0f),   // 
-	 glm::vec3(-5.5f, -1.25f,  0.0f),  //  
-	 glm::vec3(-4.0f, 1.5f,  0.0f),    // 
-	 glm::vec3(-4.0f, -1.5f,  0.0f),   // _______
-	 glm::vec3(-2.0f,  0.0f,  0.0f),   // +
-	 glm::vec3(-0.5f, 0.0f,  0.0f),    // 
-	 glm::vec3(1.0f,  0.0f,  0.0f),    //
-	 glm::vec3(-0.5f,  1.5f,  0.0f),   //
-	 glm::vec3(-0.5f,  -1.5f,  0.0f),  // _______
-	 glm::vec3(3.0f,  0.0f,  0.0f),    // +
-	 glm::vec3(4.5f, 0.0f,  0.0f),	   // 
-	 glm::vec3(6.0f,  0.0f,  0.0f),	   // 
-	 glm::vec3(4.5f,  1.5f,  0.0f),	   //
-	 glm::vec3(4.5f,  -1.5f,  0.0f)	   // 
+	 glm::vec3(-6.0f,  2.0f, 0.0f),  // C
+	 glm::vec3(-5.5f, 3.25f, 0.0f),  // 
+	 glm::vec3(-5.5f, 0.75f, 0.0f),  //  
+	 glm::vec3(-4.0f,  3.5f, 0.0f),  // 
+	 glm::vec3(-4.0f,  0.5f, 0.0f),  // _______
+	 glm::vec3(-2.0f,  2.0f, 0.0f),  // +
+	 glm::vec3(-0.5f,  2.0f, 0.0f),  // 
+	 glm::vec3( 1.0f,  2.0f, 0.0f),  //
+	 glm::vec3(-0.5f,  3.5f, 0.0f),  //
+	 glm::vec3(-0.5f,  0.5f, 0.0f),  // _______
+	 glm::vec3( 3.0f,  2.0f, 0.0f),  // +
+	 glm::vec3( 4.5f,  2.0f, 0.0f),	 // 
+	 glm::vec3( 6.0f,  2.0f, 0.0f),	 // 
+	 glm::vec3( 4.5f,  3.5f, 0.0f),	 //
+	 glm::vec3( 4.5f,  0.5f, 0.0f)	 // 
 	};
 
-	// configure the cube's VAO
-	unsigned int VBO, cubeVAO;
-	glGenVertexArrays(1, &cubeVAO);
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBindVertexArray(cubeVAO);
+	std::vector<glm::mat4> wallModelMatrices;
+	// left wall
+	glm::mat4 model(1.0f);
+	model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+	// right wall
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
 
+	// configure the cube's VAO
+	unsigned int cubeVBO, cubeVAO;
+	glGenVertexArrays(1, &cubeVAO);
+	glGenBuffers(1, &cubeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+	glBindVertexArray(cubeVAO);
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-
 	// normal attribute
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
 	glEnableVertexAttribArray(1);
-
 	// texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
@@ -212,34 +182,56 @@ int main()
 	// configure the light's VAO
 	unsigned int lightVAO;
 	glGenVertexArrays(1, &lightVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBindVertexArray(lightVAO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// configure the skyboxVAO
-	unsigned int skyboxVAO, skyboxVBO;
-	glGenVertexArrays(1, &skyboxVAO);
-	glGenBuffers(1, &skyboxVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-	glBindVertexArray(skyboxVAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// configure the quad's VAO
+	unsigned int quadVBO, quadVAO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glBindVertexArray(quadVAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 
-	unsigned int diffuseMap = loadTexture("images/container2.png");
-	unsigned int specularMap = loadTexture("images/container2_specular.png");
+	// load textures
+	unsigned int cubeDiffuseMap = loadTexture("images/container2.png");
+	unsigned int cubeSpecularMap = loadTexture("images/container2_specular.png");
+	unsigned int floorDiffuseMap = loadTexture("images/wood.jpg");
+	unsigned int floorSpecularMap = loadTexture("images/wood_specular.jpg");
+	unsigned int wallTexture = loadTexture("images/wall_tex.jpg");
 
 	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
 
-	std::vector<std::string> faces{ "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg" };
-	unsigned int cubemapTexture = loadCubemap(faces);
+	// bind uniform block to binding point 0
+	unsigned int uniformBlockIndexLamp = glGetUniformBlockIndex(lampShader.ID, "Matrices");
+	unsigned int uniformBlockIndexLighting = glGetUniformBlockIndex(lightingShader.ID, "Matrices");
+	unsigned int uniformBlockIndexModel = glGetUniformBlockIndex(modelShader.ID, "Matrices");
+	glUniformBlockBinding(lampShader.ID, uniformBlockIndexLamp, 0);
+	glUniformBlockBinding(lightingShader.ID, uniformBlockIndexLighting, 0);
+	glUniformBlockBinding(modelShader.ID, uniformBlockIndexModel, 0);
 
-	skyboxShader.setInt("skybox", 0);
+	// create uniform buffer object
+	unsigned int uboMatrices;
+	glGenBuffers(1, &uboMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -254,19 +246,28 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glm::mat4 view = camera.getViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(view));
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
+
 		// activate the lighting shader program
 		lightingShader.use();
+		lightingShader.setFloat("scaleS", 1.0f);
+		lightingShader.setFloat("scaleT", 1.0f);
 		lightingShader.setInt("material.diffuse", 0);
 		lightingShader.setInt("material.specular", 1);
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setFloat("material.shininess", 32.0f);
-
-		// directional light
-		lightingShader.setVec3("dirLight.direction", lightDir);
-		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("dirLight.diffuse", 0.8f, 0.66f, 0.41f);
-		lightingShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
+		// point light
+		lightingShader.setVec3("pointLight.position", lampPos);
+		lightingShader.setVec3("pointLight.ambient", 0.05f, 0.05f, 0.05f);
+		lightingShader.setVec3("pointLight.diffuse", 0.8f, 0.66f, 0.41f);
+		lightingShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
+		lightingShader.setFloat("pointLight.constant", 1.0f);
+		lightingShader.setFloat("pointLight.linear", 0.045);
+		lightingShader.setFloat("pointLight.quadratic", 0.0075);
 		// spotlight
 		lightingShader.setVec3("spotLight.position", camera.Position);
 		lightingShader.setVec3("spotLight.direction", camera.Front);
@@ -279,26 +280,19 @@ int main()
 		lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		
-		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
-		lightingShader.setMat4("projection", projection);
-		glm::mat4 view = camera.getViewMatrix();
-		lightingShader.setMat4("view", view);
-
-		// world transformation
+		// world transformation (set to identity matrix initially)
 		glm::mat4 model = glm::mat4(1.0f);
 		lightingShader.setMat4("model", model);
 
+		// render cube objects
+		//----------------
+		glBindVertexArray(cubeVAO);
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-
+		glBindTexture(GL_TEXTURE_2D, cubeDiffuseMap);
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-
-		// render cube objects
-		glBindVertexArray(cubeVAO);
+		glBindTexture(GL_TEXTURE_2D, cubeSpecularMap);
 		for (unsigned int i = 0; i < 15; ++i)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
@@ -309,22 +303,75 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		// render floor
+		//--------------
+		glBindVertexArray(quadVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, floorDiffuseMap);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, floorSpecularMap);
+		model = glm::translate(model, glm::vec3(0.0f, -0.5f, 10.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(20.0f, 30.0f, 1.0f));
+		lightingShader.setFloat("scaleS", 5.0f);
+		lightingShader.setFloat("scaleT", 7.5f);
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		// render walls
+		//----------
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, wallTexture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, 0); // no specular map for walls
+		// left wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		lightingShader.setFloat("scaleS", 7.5f);
+		lightingShader.setFloat("scaleT", 5.0f);
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// right wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(10.0f, 2.5f, 10.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// front wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 2.5f, -5.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// rear wall
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 2.5f, 25.0f));
+		model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		lightingShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 		// render nanosuit model
+		lightingShader.setFloat("scaleS", 1.0f);
+		lightingShader.setFloat("scaleT", 1.0f);
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, modelPos);
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
 		lightingShader.setMat4("model", model);
 		nanosuitModel.Draw(lightingShader);
 
-		// render skybox
-		glDepthFunc(GL_LEQUAL);
-		skyboxShader.use();
-		skyboxShader.setMat4("projection", projection);
-		view = glm::mat4(glm::mat3(camera.getViewMatrix()));
-		skyboxShader.setMat4("view", view);
-		glBindVertexArray(skyboxVAO);
+		// render light source
+		lampShader.use();
+		lampPos.x = 5 * cos(glfwGetTime());
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lampPos);
+		model = glm::scale(model, glm::vec3(0.2f)); 
+		lampShader.setMat4("model", model);
+		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glDepthFunc(GL_LESS);
 
 		// swap buffers and poll events
 		glfwSwapBuffers(window);
@@ -379,17 +426,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll((float)yoffset);
 }
 
-unsigned int &loadTexture( const char* name)
+unsigned int &loadTexture(const char* name)
 {
 	unsigned int id;
 	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-
-	// set the texture filtering options
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// load and generate texture
 	int width, height, nrChannels;
@@ -397,8 +437,21 @@ unsigned int &loadTexture( const char* name)
 	unsigned char *data = stbi_load(name, &width, &height, &nrChannels, 0);
 	if (data)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GLenum format;
+		if (nrChannels == 3)
+			format = GL_RGB;
+		if (nrChannels == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		// set the texture filtering options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 	else
 	{
@@ -407,36 +460,4 @@ unsigned int &loadTexture( const char* name)
 	stbi_image_free(data);
 
 	return id;
-}
-
-unsigned int loadCubemap(std::vector<std::string> faces)
-{
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-	stbi_set_flip_vertically_on_load(false);
-
-	int width, height, nrChannels;
-	for (unsigned int i = 0; i < faces.size(); i++)
-	{
-		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			stbi_image_free(data);
-		}
-		else
-		{
-			std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
-			stbi_image_free(data);
-		}
-	}
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	return textureID;
 }
