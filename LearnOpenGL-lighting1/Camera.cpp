@@ -14,18 +14,11 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float u
 
 void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
-	float initialY = Position.y;
 	float velocity = MovementSpeed * deltaTime;
 	if (direction == FORWARD)
-	{
 		Position += velocity * Front;
-		Position.y = initialY;
-	}
 	if (direction == BACKWARD)
-	{
 		Position -= velocity * Front;
-		Position.y = initialY;
-	}
 	if (direction == LEFT)
 		Position -= velocity * Right;
 	if (direction == RIGHT)
