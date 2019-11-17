@@ -308,7 +308,7 @@ int main()
 		lightingShader.setInt("material.diffuse", 0);
 		lightingShader.setInt("material.specular", 1);
 		lightingShader.setVec3("viewPos", camera.Position);
-		lightingShader.setFloat("material.shininess", 32.0f);
+		lightingShader.setFloat("material.shininess", 64.0f);
 		// point light
 		lightingShader.setVec3("pointLight.position", lampPos);
 		lightingShader.setVec3("pointLight.ambient", 0.05f, 0.05f, 0.05f);
