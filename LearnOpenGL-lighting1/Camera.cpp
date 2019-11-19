@@ -23,6 +23,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 		Position -= velocity * Right;
 	if (direction == RIGHT)
 		Position += velocity * Right;
+	Position.y = 2.0f;
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)

@@ -458,16 +458,6 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
-	if (camera.Position.x < -9.5)
-		camera.Position.x = -9.5;
-	if (camera.Position.x > 9.5)
-		camera.Position.x = 9.5;
-	if (camera.Position.z < -4.5)
-		camera.Position.z = -4.5;
-	if (camera.Position.z > 24.5)
-		camera.Position.z = 24.5;
-	if (camera.Position.y != 2)
-		camera.Position.y = 2;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
