@@ -16,7 +16,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-unsigned int &loadTexture(const char* name);
+unsigned int &loadTexture(const char* name, bool gammaCorrection);
 unsigned int loadCubemap(std::vector<std::string> faces);
 
 const unsigned int screenWidth = 800, screenHeight = 600;
@@ -252,11 +252,11 @@ int main()
 	glEnable(GL_CULL_FACE);
 
 	// load textures
-	unsigned int cubeDiffuseMap = loadTexture("images/container2.png");
-	unsigned int cubeSpecularMap = loadTexture("images/container2_specular.png");
-	unsigned int floorDiffuseMap = loadTexture("images/wood.jpg");
-	unsigned int floorSpecularMap = loadTexture("images/wood_specular.jpg");
-	unsigned int wallTexture = loadTexture("images/wall_tex.jpg");
+	unsigned int cubeDiffuseMap = loadTexture("images/container2.png", true);
+	unsigned int cubeSpecularMap = loadTexture("images/container2_specular.png", false);
+	unsigned int floorDiffuseMap = loadTexture("images/wood.jpg", true);
+	unsigned int floorSpecularMap = loadTexture("images/wood_specular.jpg", false);
+	unsigned int wallTexture = loadTexture("images/wall_tex.jpg", true);
 
 	std::vector<std::string> faces
 	{ "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg" };
@@ -264,7 +264,7 @@ int main()
 	skyboxShader.use();
 	skyboxShader.setInt("skybox", 0);
 
-	Model nanosuitModel("objects/nanosuit/nanosuit.obj");
+	Model nanosuitModel("objects/nanosuit/nanosuit.obj", true);
 
 	// bind uniform block to binding point 0
 	unsigned int uniformBlockIndexLamp = glGetUniformBlockIndex(lampShader.ID, "Matrices");
@@ -303,6 +303,7 @@ int main()
 
 		// activate the lighting shader program
 		lightingShader.use();
+		lightingShader.setBool("gamma", true);
 		lightingShader.setFloat("scaleS", 1.0f);
 		lightingShader.setFloat("scaleT", 1.0f);
 		lightingShader.setInt("material.diffuse", 0);
@@ -315,8 +316,8 @@ int main()
 		lightingShader.setVec3("pointLight.diffuse", 0.8f, 0.66f, 0.41f);
 		lightingShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
 		lightingShader.setFloat("pointLight.constant", 1.0f);
-		lightingShader.setFloat("pointLight.linear", 0.045);
-		lightingShader.setFloat("pointLight.quadratic", 0.0075);
+		lightingShader.setFloat("pointLight.linear", 0.14f);
+		lightingShader.setFloat("pointLight.quadratic", 0.07f);
 		// spotlight
 		lightingShader.setVec3("spotLight.position", camera.Position);
 		lightingShader.setVec3("spotLight.direction", camera.Front);
@@ -447,9 +448,7 @@ int main()
 void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	{
 		glfwSetWindowShouldClose(window, true);
-	}
 	float cameraSpeed = 2.5f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -498,7 +497,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll((float)yoffset);
 }
 
-unsigned int &loadTexture(const char* name)
+unsigned int &loadTexture(const char* name, bool gammaCorrection)
 {
 	unsigned int id;
 	glGenTextures(1, &id);
@@ -509,14 +508,21 @@ unsigned int &loadTexture(const char* name)
 	unsigned char *data = stbi_load(name, &width, &height, &nrChannels, 0);
 	if (data)
 	{
-		GLenum format;
+		GLenum dataFormat;
+		GLenum internalFormat;
 		if (nrChannels == 3)
-			format = GL_RGB;
+		{
+			dataFormat = GL_RGB;
+			internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+		}
 		if (nrChannels == 4)
-			format = GL_RGBA;
+		{
+			dataFormat = GL_RGBA;
+			internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+		}
 
 		glBindTexture(GL_TEXTURE_2D, id);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		// set the texture filtering options
