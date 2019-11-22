@@ -313,6 +313,17 @@ int main()
 
 		processInput(window);
 
+		lampPos.x = 5 * cos(glfwGetTime());
+
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 view = camera.getViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(view));
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
+
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
 		// create light space transformation matrices
 		float aspect = (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
 		float near = 1.0f;
@@ -326,15 +337,73 @@ int main()
 		shadowTransforms.push_back(shadowProj * glm::lookAt(lampPos, lampPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 		shadowTransforms.push_back(shadowProj * glm::lookAt(lampPos, lampPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 
-		// clear the color buffer and depth buffer
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//// render to depth cubemap
+		//// ----------------------
+		//glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		//glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		//glClear(GL_DEPTH_BUFFER_BIT);
+		//depthShader.use();
+		//for (unsigned int i = 0; i < 6; i++)
+		//	depthShader.setMat4("shadowTransforms[" + std::to_string(i) + "]", shadowTransforms[i]);
+		//depthShader.setFloat("far_plane", far);
+		//depthShader.setVec3("lightPos", lampPos);
+		//// render cube objects
+		//glBindVertexArray(cubeVAO);
+		//for (unsigned int i = 0; i < 15; ++i)
+		//{
+		//	model = glm::mat4(1.0f);
+		//	model = glm::translate(model, cubePositions[i]);
+		//	float angle = 50.0f * glfwGetTime();
+		//	model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		//	depthShader.setMat4("model", model);
+		//	glDrawArrays(GL_TRIANGLES, 0, 36);
+		//}
+		//// render floor
+		//glBindVertexArray(quadVAO);
+		//model = glm::translate(model, glm::vec3(0.0f, -0.5f, 10.0f));
+		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(20.0f, 30.0f, 1.0f));
+		//depthShader.setMat4("model", model);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//// left wall
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(-10.0f, 2.5f, 10.0f));
+		//model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		//depthShader.setMat4("model", model);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//// right wall
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(10.0f, 2.5f, 10.0f));
+		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		//depthShader.setMat4("model", model);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//// front wall
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 2.5f, -5.0f));
+		//model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		//depthShader.setMat4("model", model);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//// rear wall
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 2.5f, 25.0f));
+		//model = glm::scale(model, glm::vec3(30.0f, 10.0f, 1.0f));
+		//model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//depthShader.setMat4("model", model);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//// render nanosuit model
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, modelPos);
+		//model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+		//depthShader.setMat4("model", model);
+		//nanosuitModel.Draw(depthShader);
 
-		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
-		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(view));
-		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// clear the color buffer and depth buffer
+		glViewport(0, 0, screenWidth, screenHeight);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// activate the lighting shader program
 		lightingShader.use();
@@ -366,7 +435,7 @@ int main()
 		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		
 		// world transformation (set to identity matrix initially)
-		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::mat4(1.0f);
 		lightingShader.setMat4("model", model);
 
 		// render cube objects
