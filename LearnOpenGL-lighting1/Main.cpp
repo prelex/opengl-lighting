@@ -75,7 +75,6 @@ int main()
 	Shader skyboxShader("shaders/skybox_vs.txt", "shaders/skybox_fs.txt");
 	Shader depthShader("shaders/depthMap_vs.txt", "shaders/depthMap_fs.txt", "shaders/depthMap_gs.txt");
 
-	glViewport(0, 0, 800, 600);
 
 	// cube vertices
 	// defined in the appropriate order for face culling
