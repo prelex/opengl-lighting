@@ -33,7 +33,7 @@ bool firstMouse = true;
 Camera camera(glm::vec3(0.0f, 2.0f, 20.0f));
 
 // Position of lamp
-glm::vec3 lampPos(0.0f, 5.0f, 5.0f);
+glm::vec3 lampPos(0.0f, 5.0f, 10.0f);
 
 // Position of the nanosuit model
 glm::vec3 modelPos(0.0f, -0.5f, 4.0f);
@@ -250,7 +250,6 @@ int main()
 	glBindVertexArray(0);
 
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
 	glEnable(GL_MULTISAMPLE);
 
 	// load textures
@@ -290,6 +289,7 @@ int main()
 	// create depth cubemap
 	unsigned int depthCubemap;
 	glGenTextures(1, &depthCubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	for (unsigned int i = 0; i < 6; i++)
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -303,6 +303,8 @@ int main()
 	glDrawBuffer(GL_NONE);
 	glDrawBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glDisable(GL_CULL_FACE);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -323,11 +325,12 @@ int main()
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// create light space transformation matrices
 		float aspect = (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
 		float near = 1.0f;
-		float far = 25.0f;
+		float far = 35.0f;
 		glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
 		std::vector<glm::mat4> shadowTransforms;
 		shadowTransforms.push_back(shadowProj * glm::lookAt(lampPos, lampPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
@@ -337,27 +340,27 @@ int main()
 		shadowTransforms.push_back(shadowProj * glm::lookAt(lampPos, lampPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 		shadowTransforms.push_back(shadowProj * glm::lookAt(lampPos, lampPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 
-		//// render to depth cubemap
-		//// ----------------------
-		//glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-		//glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-		//glClear(GL_DEPTH_BUFFER_BIT);
-		//depthShader.use();
-		//for (unsigned int i = 0; i < 6; i++)
-		//	depthShader.setMat4("shadowTransforms[" + std::to_string(i) + "]", shadowTransforms[i]);
-		//depthShader.setFloat("far_plane", far);
-		//depthShader.setVec3("lightPos", lampPos);
-		//// render cube objects
-		//glBindVertexArray(cubeVAO);
-		//for (unsigned int i = 0; i < 15; ++i)
-		//{
-		//	model = glm::mat4(1.0f);
-		//	model = glm::translate(model, cubePositions[i]);
-		//	float angle = 50.0f * glfwGetTime();
-		//	model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-		//	depthShader.setMat4("model", model);
-		//	glDrawArrays(GL_TRIANGLES, 0, 36);
-		//}
+		// render to depth cubemap
+		// ----------------------
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		depthShader.use();
+		for (unsigned int i = 0; i < 6; i++)
+			depthShader.setMat4("shadowTransforms[" + std::to_string(i) + "]", shadowTransforms[i]);
+		depthShader.setFloat("far_plane", far);
+		depthShader.setVec3("lightPos", lampPos);
+		// render cube objects
+		glBindVertexArray(cubeVAO);
+		for (unsigned int i = 0; i < 15; ++i)
+		{
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 50.0f * glfwGetTime();
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+			depthShader.setMat4("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 		//// render floor
 		//glBindVertexArray(quadVAO);
 		//model = glm::translate(model, glm::vec3(0.0f, -0.5f, 10.0f));
@@ -392,28 +395,27 @@ int main()
 		//model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		//depthShader.setMat4("model", model);
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
-		//// render nanosuit model
-		//model = glm::mat4(1.0f);
-		//model = glm::translate(model, modelPos);
-		//model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-		//depthShader.setMat4("model", model);
-		//nanosuitModel.Draw(depthShader);
-
+		// render nanosuit model
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, modelPos);
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+		depthShader.setMat4("model", model);
+		nanosuitModel.Draw(depthShader);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// clear the color buffer and depth buffer
 		glViewport(0, 0, screenWidth, screenHeight);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// activate the lighting shader program
 		lightingShader.use();
 		lightingShader.setBool("gamma", true);
 		lightingShader.setFloat("scaleS", 1.0f);
 		lightingShader.setFloat("scaleT", 1.0f);
-		lightingShader.setInt("material.diffuse", 0);
-		lightingShader.setInt("material.specular", 1);
+		lightingShader.setInt("depthMap", 2);
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setFloat("material.shininess", 64.0f);
+		lightingShader.setInt("material.diffuse", 0);
+		lightingShader.setInt("material.specular", 1);
 		// point light
 		lightingShader.setVec3("pointLight.position", lampPos);
 		lightingShader.setVec3("pointLight.ambient", 0.05f, 0.05f, 0.05f);
@@ -422,6 +424,10 @@ int main()
 		lightingShader.setFloat("pointLight.constant", 1.0f);
 		lightingShader.setFloat("pointLight.linear", 0.14f);
 		lightingShader.setFloat("pointLight.quadratic", 0.07f);
+		lightingShader.setFloat("far_plane", far);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+		
 		// spotlight
 		lightingShader.setVec3("spotLight.position", camera.Position);
 		lightingShader.setVec3("spotLight.direction", camera.Front);
@@ -519,7 +525,6 @@ int main()
 
 		// render light source
 		lampShader.use();
-		lampPos.x = 5 * cos(glfwGetTime());
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lampPos);
 		model = glm::scale(model, glm::vec3(0.2f)); 
@@ -595,7 +600,6 @@ unsigned int &loadTexture(const char* name, bool gammaCorrection)
 {
 	unsigned int id;
 	glGenTextures(1, &id);
-
 	// load and generate texture
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true);
@@ -624,6 +628,7 @@ unsigned int &loadTexture(const char* name, bool gammaCorrection)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 	else
 	{
@@ -638,6 +643,7 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 	stbi_set_flip_vertically_on_load(false);
 	int width, height, nrChannels;
@@ -662,6 +668,7 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 	return textureID;
 }
