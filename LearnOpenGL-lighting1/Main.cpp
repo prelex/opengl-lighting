@@ -75,7 +75,6 @@ int main()
 	Shader skyboxShader("shaders/skybox_vs.txt", "shaders/skybox_fs.txt");
 	Shader depthShader("shaders/depthMap_vs.txt", "shaders/depthMap_fs.txt", "shaders/depthMap_gs.txt");
 
-
 	// cube vertices
 	// defined in the appropriate order for face culling
 	float cubeVertices[] = {
@@ -428,17 +427,17 @@ int main()
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 		
-		// spotlight
-		lightingShader.setVec3("spotLight.position", camera.Position);
-		lightingShader.setVec3("spotLight.direction", camera.Front);
-		lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-		lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-		lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("spotLight.constant", 1.0f);
-		lightingShader.setFloat("spotLight.linear", 0.09);
-		lightingShader.setFloat("spotLight.quadratic", 0.032);
-		lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+		//// spotlight
+		//lightingShader.setVec3("spotLight.position", camera.Position);
+		//lightingShader.setVec3("spotLight.direction", camera.Front);
+		//lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+		//lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+		//lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+		//lightingShader.setFloat("spotLight.constant", 1.0f);
+		//lightingShader.setFloat("spotLight.linear", 0.09);
+		//lightingShader.setFloat("spotLight.quadratic", 0.032);
+		//lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+		//lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		
 		// world transformation (set to identity matrix initially)
 		model = glm::mat4(1.0f);
