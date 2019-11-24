@@ -421,8 +421,8 @@ int main()
 		lightingShader.setVec3("pointLight.diffuse", 0.8f, 0.66f, 0.41f);
 		lightingShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
 		lightingShader.setFloat("pointLight.constant", 1.0f);
-		lightingShader.setFloat("pointLight.linear", 0.14f);
-		lightingShader.setFloat("pointLight.quadratic", 0.07f);
+		lightingShader.setFloat("pointLight.linear", 0.09f);
+		lightingShader.setFloat("pointLight.quadratic", 0.032f);
 		lightingShader.setFloat("far_plane", far);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
